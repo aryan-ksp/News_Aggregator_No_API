@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Aggregator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h1 class="text-center">📰 Latest News</h1>
+
+        <!-- Category Filter -->
+        <div class="text-center mb-4">
+            <a href="/?category=general" class="btn btn-secondary">General</a>
+            <a href="/?category=technology" class="btn btn-secondary">Technology</a>
+            <a href="/?category=sports" class="btn btn-secondary">Sports</a>
+            <a href="/?category=business" class="btn btn-secondary">Business</a>
+        </div>
+
+        <!-- News Container -->
+        <div id="news-container" class="row">
+            {% for article in news %}
+            <div class="col-md-4 news-item">
+                <div class="card">
+                    <img src="{{ article.image }}" class="card-img-top" alt="News Image">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ article.title }}</h5>
+                        <a href="{{ article.url }}" target="_blank" class="btn btn-primary">Read More</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Loader Animation -->
+        <div id="loading" class="text-center mt-3" style="display: none;">
+            <img src="https://i.gifer.com/4V0b.gif" width="50" alt="Loading...">
+        </div>
+
+    </div>
+
+    <script>
+        let page = 2;  // Start from page 2 since first 10 articles are loaded
+        let category = "{{ category }}";  
+        let loading = false;  // Prevent multiple requests at the same time
+
+        function loadMoreNews() {
+            if (loading) return;  // Stop duplicate requests
+            loading = true;
+            $("#loading").show();
+
+            $.get(`/load_more?category=${category}&page=${page}`, function(data) {
+                if (data.length > 0) {
+                    data.forEach(article => {
+                        $("#news-container").append(`
+                            <div class="col-md-4 news-item">
+                                <div class="card">
+                                    <img src="${article.image}" class="card-img-top" alt="News Image">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${article.title}</h5>
+                                        <a href="${article.url}" target="_blank" class="btn btn-primary">Read More</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                    });
+
+                    page++;  // Increase page number for next request
+                }
+
+                $("#loading").hide();
+                loading = false;
+            });
+        }
+
+        // Detect when user scrolls to bottom
+        $(window).on("scroll", function() {
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+                loadMoreNews();
+            }
+        });
+    </script>
+
+</body>
+</html>
